@@ -1,16 +1,32 @@
-```markdown
+---
+
+````md
 # Monero (XMR) CPU Mining with Docker (XMRig)
 
-This document describes a real-world, production-tested Monero CPU mining setup using Docker and XMRig. All steps below were executed manually and verified with live pool statistics.
+This repository documents a **real-world, production-tested Monero (XMR) CPU mining setup**
+using **Docker** and **XMRig**.
+
+All commands were executed manually and verified against live pool statistics.
+The setup is designed for **stability, performance, and reproducibility**.
+
+---
+
+## Overview
+
+- CPU-only Monero mining (RandomX)
+- Docker-based build and runtime
+- XMRig compiled from source
+- MSR and HugePages enabled
+- Tested with live mining pools
 
 ---
 
 ## 1. Host Requirements
 
-- **Linux host** (Ubuntu/Debian recommended)
-- **Docker** installed and running
-- **Root / sudo** access
-- **Intel/AMD CPU** with AES-NI support
+- Linux host
+- Docker installed
+- Root / sudo access
+- Intel CPU with **AES-NI**
 - System capable of **HugePages**
 - Kernel **MSR** support
 
@@ -18,43 +34,39 @@ This document describes a real-world, production-tested Monero CPU mining setup 
 
 ## 2. Enable MSR on Host (Required)
 
-XMRig requires access to CPU MSR registers for optimal RandomX performance. Run these commands on your host machine:
+XMRig requires access to CPU MSR registers for optimal RandomX performance.
+
+Load the MSR module:
 
 ```bash
 sudo modprobe msr
+````
 
-```
-
-**Verify:**
+Verify:
 
 ```bash
 ls /dev/cpu/*/msr
-
 ```
 
-*(Optional – Make it persistent after reboot)*
+(Optional – make persistent across reboots):
 
 ```bash
 echo msr | sudo tee /etc/modules-load.d/msr.conf
-
 ```
 
 ---
 
 ## 3. Start a Clean Ubuntu Container
 
-All build steps are performed inside a temporary container to keep your host clean.
+All build steps are performed **inside the container**.
 
 ```bash
 docker run -it --name monero-dev ubuntu:24.04 bash
-
 ```
 
 ---
 
 ## 4. Install Build Dependencies (Inside Container)
-
-Run the following inside the container:
 
 ```bash
 apt update
@@ -62,7 +74,6 @@ apt install -y \
   git build-essential cmake \
   libuv1-dev libssl-dev libhwloc-dev \
   ca-certificates nano
-
 ```
 
 ---
@@ -71,31 +82,29 @@ apt install -y \
 
 ```bash
 cd /opt
-git clone [https://github.com/xmrig/xmrig.git](https://github.com/xmrig/xmrig.git)
+git clone https://github.com/xmrig/xmrig.git
 cd xmrig
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
-
 ```
 
-**Verify the build:**
+Verify build:
 
 ```bash
 ./xmrig --version
-
 ```
 
 ---
 
-## 6. Create config.json (Inside Container)
+## 6. Create `config.json` (Inside Container)
 
 ```bash
+cd /opt/xmrig/build
 nano config.json
-
 ```
 
-**Example configuration:**
+Example configuration:
 
 ```json
 {
@@ -117,7 +126,6 @@ nano config.json
     }
   ]
 }
-
 ```
 ---
 
@@ -125,37 +133,43 @@ nano config.json
 
 ```bash
 ./xmrig -c config.json
-
 ```
 
-**Expected output:**
+Expected output:
 
-* Pool connection established.
-* Shares accepted.
-* *Note: MSR might fail inside the temporary container; this is expected until the final privileged run.*
+```text
+Pool connection established
+Shares accepted
+```
 
-**Stop and Exit:**
-Press `Ctrl+C` then type `exit`.
+> MSR warnings may appear here — this is expected inside a non-privileged container.
+
+Stop mining:
+
+```text
+Ctrl + C
+```
+
+Exit the container:
+
+```bash
+exit
+```
 
 ---
 
 ## 8. Commit Container to Production Image (Host)
-
-On your host terminal, save your progress into a clean production image:
 
 ```bash
 docker commit \
   --change='WORKDIR /opt/xmrig/build' \
   --change='ENTRYPOINT ["./xmrig","-c","config.json"]' \
   monero-dev xmrig-prod
-
 ```
 
 ---
 
 ## 9. Run Production Miner (Host)
-
-Launch the miner in the background with full hardware access:
 
 ```bash
 docker run -d \
@@ -163,41 +177,26 @@ docker run -d \
   --privileged \
   --restart unless-stopped \
   xmrig-prod
-
 ```
 
 ---
 
 ## 10. Verify Runtime Status
 
-Check if everything is running optimally:
-
 ```bash
 docker logs -f xmrig
-
 ```
 
-**Look for these critical success lines:**
+Expected critical lines:
 
-* `msr register values for "intel" preset have been set successfully`
-* `huge pages 100% 1168/1168`
-* `cpu READY threads ...`
-
----
-
-## 11. Pool Verification
-
-1. Go to [supportxmr.com](https://supportxmr.com).
-2. Paste your **Wallet Address** in the lookup field.
-3. Verify that your worker is visible and the hashrate is updating.
-
----
-
-## Notes
-
-* This setup uses CPU-only **RandomX** algorithm.
-* GPU / CUDA is intentionally excluded for this specific setup.
-* Mining profitability depends heavily on your hardware efficiency and electricity costs.
-* This project is intended for learning, experimentation, and long-term accumulation.
-
+```text
+msr      register values for "intel" preset have been set successfully
+huge pages 100% 1168/1168
+cpu READY threads ...
 ```
+
+This confirms:
+
+* MSR active
+* HugePages active
+* Optimal
