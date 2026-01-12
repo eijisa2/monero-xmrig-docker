@@ -1,29 +1,40 @@
 # Monero XMR Mining with Docker (CPU / RandomX)
 
-Production-grade Monero (XMR) CPU mining using Docker.
-Optimized with MSR registers and HugePages for maximum RandomX performance.
+This repository documents a real-world setup of Monero (XMR) CPU mining
+using Docker and XMRig.
 
-## Features
-- CPU-only (RandomX)
-- Dockerized XMRig (built from source)
-- MSR register tuning (Intel)
-- HugePages enabled
-- Pool mining (SupportXMR tested)
-- Reboot-safe production setup
+The goal is simplicity first, optimization later.
 
-## Requirements
+---
+
+## What this repository is
+- CPU-only Monero mining (RandomX)
+- Docker-based setup
+- Built and tested on a real server
+- Focused on reproducibility, not hype
+
+---
+
+## What this repository is NOT
+- Not a "get rich quick" mining guide
+- Not GPU/CUDA focused
+- Not beginner hand-holding magic
+
+---
+
+## Minimal Requirements
 - Linux host
-- Docker
-- Root / sudo access
-- CPU with AES-NI (Intel / AMD)
+- Docker installed
+- CPU with AES-NI support
+- Internet connection
 
-## Quick Start (TL;DR)
+That's enough to start mining.
+
+---
+
+## Basic Usage
+
 ```bash
-sudo modprobe msr
-sudo sysctl -w vm.nr_hugepages=128
-
-docker run -d \
-  --name xmrig \
-  --privileged \
-  --restart unless-stopped \
-  xmrig-prod
+docker compose build
+docker compose up -d
+docker logs -f xmrig
