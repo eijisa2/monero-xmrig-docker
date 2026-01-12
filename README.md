@@ -119,9 +119,6 @@ nano config.json
 }
 
 ```
-
-> ⚠️ **IMPORTANT:** Never commit your real wallet address to a public GitHub repository.
-
 ---
 
 ## 7. Test Mining Inside Container
