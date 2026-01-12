@@ -1,6 +1,4 @@
----
-
-````md
+Markdown
 # Monero (XMR) CPU Mining with Docker (XMRig)
 
 This repository documents a **real-world, production-tested Monero (XMR) CPU mining setup**
